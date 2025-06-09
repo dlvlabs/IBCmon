@@ -36,7 +36,7 @@ func (app *App) checkClientsHealth(ctx context.Context) error {
 	for chainId, clients := range app.Store.IBCInfo {
 		for clientId, client := range clients {
 			g.Go(func() error {
-				updatedTimestamp, err := client.checkHealth(
+				err := client.checkHealth(
 					ctx, app.grpcs[chainId], app.cdc, clientId,
 					app.cfg.Rule.ClientExpiredWarningTime,
 				)
@@ -44,8 +44,6 @@ func (app *App) checkClientsHealth(ctx context.Context) error {
 					logger.Error(err)
 					return err
 				}
-
-				app.updateStore(func() { client.ClientUpdated = updatedTimestamp })
 
 				return nil
 			})
@@ -61,21 +59,44 @@ func (client *Client) checkHealth(
 	cdc codectypes.InterfaceRegistry,
 	clientId string,
 	warningTime time.Duration,
-) (time.Time, error) {
-	cs, err := grpc.GetConsensusState(ctx, clientId, client.RevisionNumber, client.RevisionHeight)
+) error {
+	// Get client state for new RevisionNumber and RevisionHeight
+	state, err := grpc.GetClientState(ctx, clientId)
 	if err != nil {
-		return time.Time{}, err
+		return err
+	}
+
+	if state.TypeUrl != "/ibc.lightclients.tendermint.v1.ClientState" {
+		msg := fmt.Sprintf("skipping client: %s, only tendermint light clients are supported", clientId)
+		logger.Debug(msg)
+	}
+
+	var iClientState exported.ClientState
+	if err := cdc.UnpackAny(state, &iClientState); err != nil {
+		return errors.Wrapf(err, "failed to unpack client state for client: %s", clientId)
+	}
+	clientState, ok := iClientState.(*tendermint.ClientState)
+	if !ok {
+		return errors.Wrapf(err, "invalid client state type: %T", iClientState)
+	}
+
+	// Get consensus state for client updated timestamp
+	state, err = grpc.GetConsensusState(ctx, clientId, clientState.LatestHeight.RevisionNumber, clientState.LatestHeight.RevisionHeight)
+	if err != nil {
+		return err
 	}
 
 	var iConsensusState exported.ConsensusState
-	if err := cdc.UnpackAny(cs, &iConsensusState); err != nil {
-		return time.Time{}, errors.Wrapf(err, "failed to unpack consensus state for client: %s", clientId)
+	if err := cdc.UnpackAny(state, &iConsensusState); err != nil {
+		return errors.Wrapf(err, "failed to unpack consensus state for client: %s", clientId)
 	}
 	consensusState, ok := iConsensusState.(*tendermint.ConsensusState)
 	if !ok {
-		return time.Time{}, errors.Wrapf(err, "invalid consensus state type: %T", iConsensusState)
+		return errors.Wrapf(err, "invalid consensus state type: %T", iConsensusState)
 	}
 
+	// Update stored client info
+	// Don't need mutex lock here, because update each client
 	if client.warnExpiration(consensusState.Timestamp, warningTime) {
 		client.Health = false
 
@@ -86,14 +107,18 @@ func (client *Client) checkHealth(
 		logger.Warn(msg)
 		alert.SendTg(msg)
 
-		return time.Time{}, err
+		return err
 	}
-
 	client.Health = true
+
+	client.RevisionNumber = clientState.LatestHeight.RevisionNumber
+	client.RevisionHeight = clientState.LatestHeight.RevisionHeight
+	client.TrustingPeriod = clientState.TrustingPeriod
+	client.ClientUpdated = consensusState.Timestamp
 
 	logger.Info(fmt.Sprintf("client %s is healthy", clientId))
 
-	return consensusState.Timestamp, nil
+	return nil
 }
 
 func (client *Client) warnExpiration(latestTimestamp time.Time, warningTime time.Duration) bool {
