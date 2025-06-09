@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/dlvlabs/ibcmon/client/rpc/exported"
 	"github.com/dlvlabs/ibcmon/logger"
@@ -14,7 +15,7 @@ import (
 )
 
 // return code, hash, data, timeoutHeight, timeoutTimestamp, isFound, err
-func (c *Client) SearchIBCPacket(ctx context.Context, ibcPacketTracker exported.IBCPacketTracker) (uint32, string, string, uint64, int64, bool, error) {
+func (c *Client) SearchIBCPacket(ctx context.Context, ibcPacketTracker exported.IBCPacketTracker, retryingCnt uint8) (uint32, string, string, uint64, int64, bool, error) {
 	packet := ibcPacketTracker.GetPacketStatus()
 	sequence := ibcPacketTracker.GetSequence()
 	_, srcChannelId, srcPortId := ibcPacketTracker.GetSrcInfo()
@@ -29,6 +30,17 @@ func (c *Client) SearchIBCPacket(ctx context.Context, ibcPacketTracker exported.
 
 	resp, err := c.rpcClient.TxSearch(ctx, query, false, nil, nil, "asc")
 	if err != nil {
+		// Faced with a temporary error, retry up to 5 times with 10 minutes interval
+		if retryingCnt < 5 {
+			time.Sleep(10 * time.Minute)
+			retryingCnt++
+
+			msg := fmt.Sprintf("Retrying(attempt %d) SearchIBCPacket: %s", retryingCnt, query)
+			logger.Debug(msg)
+
+			return c.SearchIBCPacket(ctx, ibcPacketTracker, retryingCnt)
+		}
+
 		return 1, "", "", 0, 0, false, errors.Wrapf(err, "failed to search tx: %s", query)
 	} else if len(resp.Txs) == 0 {
 		return 0, "", "", 0, 0, false, nil

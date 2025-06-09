@@ -277,7 +277,7 @@ func (ibcPacketTracker *IBCPacketTracker) track(ctx context.Context) (bool, erro
 	if ibcPacketTracker.PacketType == PACKET_STATUS_RECV {
 		rpc = ibcPacketTracker.Destination.rpc
 	}
-	code, hash, data, timeoutHeight, timeoutTimestamp, isFound, err := rpc.SearchIBCPacket(ctx, ibcPacketTracker)
+	code, hash, data, timeoutHeight, timeoutTimestamp, isFound, err := rpc.SearchIBCPacket(ctx, ibcPacketTracker, 0)
 	if err != nil {
 		return false, err
 	} else if !isFound {
