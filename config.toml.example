@@ -1,0 +1,39 @@
+[general]
+
+# Log level: 'normal' (debug level, colored text) or 'production' (info level, json)
+log_level = "normal"
+listen_port = 8000
+
+ibc_info_update_interval = "24h0m0s"
+client_check_interval = "12h0m0s"
+packet_tracking_interval = "5s"
+
+[tg]
+enable = true
+token = ""
+chat_id = ""
+
+[rule]
+client_expired_warning_time = "24h0m0s"
+consecutive_missed_packets = 5
+
+[base_chain]
+rpc_addr = ""
+[base_chain.grpc]
+addr = ""
+tls_conn = true
+
+[counterparties]
+# All of well functioning IBC counterparties of base chain.
+
+    [counterparties."{A-Chain-ID}"]
+    rpc_addr = ""
+    [counterparties."{A-Chain-ID}".grpc]
+    addr = ""
+    tls_conn = false
+
+    [counterparties."{B-Chain-ID}"]
+    rpc_addr = ""
+    [counterparties."{B-Chain-ID}".grpc]
+    addr = ""
+    tls_conn = false

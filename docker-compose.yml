@@ -1,0 +1,11 @@
+services:
+
+  ibcmon:
+    container_name: ibcmon
+    image: ibcmon:latest
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    volumes:
+      - /home/ibcmon/config.toml:/etc/ibcmon/config.toml
+    command: "-config /etc/ibcmon/config.toml"
