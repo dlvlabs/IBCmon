@@ -50,6 +50,11 @@ func (c *Client) SearchIBCPacket(ctx context.Context, ibcPacketTracker exported.
 	var timeoutHeight uint64 = 0
 	var timeoutTimestamp int64 = 0
 	for _, event := range resp.Txs[0].TxResult.Events {
+		if tryBase64Decoding(event.Type) != packet {
+			// Only “send_packet" or “recv_packet" or “acknowledge_packet” event on each packet is target
+			continue
+		}
+
 		for _, attr := range event.Attributes {
 			switch tryBase64Decoding(attr.Key) {
 			case "packet_data":
