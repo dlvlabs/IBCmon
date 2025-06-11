@@ -41,7 +41,8 @@ func (server *Server) QueryClientHealth() ClientHealths {
 				Source:      chainId,
 				Destination: client.ChainId,
 
-				ClientId: clientId,
+				ClientId:       clientId,
+				TrustingPeriod: client.TrustingPeriod,
 			})
 		}
 	}

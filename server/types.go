@@ -30,7 +30,8 @@ type (
 		Source      string `json:"source"`
 		Destination string `json:"destination"`
 
-		ClientId string `json:"client_id"`
+		ClientId       string        `json:"client_id"`
+		TrustingPeriod time.Duration `json:"trusting_period"`
 	}
 )
 
