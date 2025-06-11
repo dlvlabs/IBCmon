@@ -42,7 +42,7 @@ func (server *Server) QueryClientHealth() ClientHealths {
 				Destination: client.ChainId,
 
 				ClientId:       clientId,
-				TrustingPeriod: client.TrustingPeriod,
+				TrustingPeriod: client.TrustingPeriod.Seconds(),
 			})
 		}
 	}
