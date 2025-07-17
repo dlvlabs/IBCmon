@@ -97,6 +97,12 @@ func (client *Client) checkHealth(
 
 	// Update stored client info
 	// Don't need mutex lock here, because update each client
+
+	client.RevisionNumber = clientState.LatestHeight.RevisionNumber
+	client.RevisionHeight = clientState.LatestHeight.RevisionHeight
+	client.TrustingPeriod = clientState.TrustingPeriod
+	client.ClientUpdated = consensusState.Timestamp
+
 	if client.warnExpiration(consensusState.Timestamp, warningTime) {
 		client.Health = false
 
@@ -107,15 +113,10 @@ func (client *Client) checkHealth(
 		logger.Warn(msg)
 		alert.SendTg(msg)
 
-		return err
+		return nil
 	}
+
 	client.Health = true
-
-	client.RevisionNumber = clientState.LatestHeight.RevisionNumber
-	client.RevisionHeight = clientState.LatestHeight.RevisionHeight
-	client.TrustingPeriod = clientState.TrustingPeriod
-	client.ClientUpdated = consensusState.Timestamp
-
 	logger.Info(fmt.Sprintf("client %s is healthy", clientId))
 
 	return nil

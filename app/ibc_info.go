@@ -118,7 +118,6 @@ func (app *App) setCounterparties(ctx context.Context) error {
 					err := clients.setActiveClient(ctx, app.grpcs[chainId], app.cdc, channel.Counterparty.ClientId)
 					if err != nil {
 						logger.Error(err)
-
 						return err
 					}
 					app.updateStore(func() { app.Store.IBCInfo[chainId] = clients })
