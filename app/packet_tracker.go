@@ -187,7 +187,7 @@ func (app *App) trackIBCPacket(ctx context.Context) error {
 					grpcClient := app.grpcs[chainId]
 					nextSequence, err := grpcClient.GetNextSequenceSend(ctx, channelId, channel.PortId)
 					if err != nil {
-						if errors.Is(err, grpc.UNIMPLMENTED) {
+						if errors.Is(errors.Cause(err), grpc.UNIMPLMENTED) {
 							msg := fmt.Sprintf(
 								"not support `NextSequenceSend` query, skip tracking IBC packet for %s(%s/%s) => %s(%s/%s)",
 								chainId, channelId, channel.PortId,

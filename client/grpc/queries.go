@@ -167,11 +167,6 @@ func (c *Client) GetNextSequenceSend(ctx context.Context, channelId, portId stri
 		},
 	)
 	if err != nil {
-		if errors.Is(err, UNIMPLMENTED) {
-			// Not support `NextSequenceSend` query
-			return 0, errors.Cause(err)
-		}
-
 		return 0, errors.Wrapf(err, "failed to get next sequence send for channel: %s", channelId)
 	}
 
