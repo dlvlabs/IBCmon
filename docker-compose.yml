@@ -1,11 +1,11 @@
 services:
 
   ibcmon:
-    container_name: ibcmon
     image: ibcmon:latest
-    restart: unless-stopped
+    command: ["-config", "/app/config/config.toml"]
+    container_name: ibcmon
+    restart: always
     ports:
       - 8000:8000
     volumes:
-      - /home/ibcmon/config.toml:/etc/ibcmon/config.toml
-    command: "-config /etc/ibcmon/config.toml"
+      - /home/user/config/config.toml:/app/config/config.toml

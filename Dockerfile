@@ -1,15 +1,26 @@
-FROM golang:1.24.1-alpine AS builder
+FROM golang:1.24.1-bookworm AS build
 
-WORKDIR /code/
-COPY . /code/
+WORKDIR /build
 
-ARG GOARCH
-ARG GOOS=linux
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-RUN GOOS=${GOOS} GOARCH=${GOARCH} go build
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    go build
 
-FROM alpine:latest
+FROM debian:bookworm-slim AS deploy
 
-COPY --from=builder /code/ibcmon /usr/bin/
+RUN groupadd -r ibcmon && \
+    useradd -r -g ibcmon ibcmon
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["ibcmon"]
+WORKDIR /app
+
+COPY --from=build /build/ibcmon /usr/local/bin/ibcmon
+
+USER ibcmon
+ENTRYPOINT ["/usr/local/bin/ibcmon"]
