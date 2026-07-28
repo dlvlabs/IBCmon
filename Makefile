@@ -1,6 +1,6 @@
-APP_NAME := ibcmon
+APP_NAME := IBCmon
 DOCKER_REPO := dlvlabs/$(APP_NAME)
-VERSION := $(shell git describe --tags)
+VERSION := $(shell git describe --tags --abbrev=0)
 
 PLATFORMS := linux/amd64,linux/arm64
 
@@ -8,7 +8,7 @@ run:
 	go run main.go -config config.toml
 
 docker-build:
-	docker build -t ibcmon:latest .
+	docker build -t $(APP_NAME):latest .
 
 docker-push:
 	@echo "Building image for all platforms: $(PLATFORMS)"
@@ -16,7 +16,7 @@ docker-push:
 	docker buildx use multiarch-builder
 	docker buildx build \
 		--platform $(PLATFORMS) \
-		--build-arg GOOS=linux \
-		--tag $(DOCKER_REPO):$(VERSION) \
+		--tag ghcr.io/$(DOCKER_REPO):latest \
+		--tag ghcr.io/$(DOCKER_REPO):$(VERSION) \
 		--file Dockerfile \
 		--push .

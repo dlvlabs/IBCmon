@@ -1,5 +1,7 @@
 FROM golang:1.24.1-bookworm AS build
 
+LABEL org.opencontainers.image.source="https://github.com/dlvlabs/IBCmon"
+
 WORKDIR /build
 
 COPY go.mod go.sum ./
