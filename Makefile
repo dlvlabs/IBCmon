@@ -1,4 +1,4 @@
-APP_NAME := IBCmon
+APP_NAME := ibcmon
 DOCKER_REPO := dlvlabs/$(APP_NAME)
 VERSION := $(shell git describe --tags --abbrev=0)
 
