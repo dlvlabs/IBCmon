@@ -1,7 +1,5 @@
 FROM golang:1.24.1-bookworm AS build
 
-LABEL org.opencontainers.image.source="https://github.com/dlvlabs/IBCmon"
-
 WORKDIR /build
 
 COPY go.mod go.sum ./
@@ -13,6 +11,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go build
 
 FROM debian:bookworm-slim AS deploy
+
+LABEL org.opencontainers.image.source="https://github.com/dlvlabs/IBCmon"
 
 RUN groupadd -r ibcmon && \
     useradd -r -g ibcmon ibcmon
